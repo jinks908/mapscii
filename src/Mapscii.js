@@ -63,8 +63,8 @@ class Mapscii {
       config.input.setRawMode(true);
     }
     config.input.resume();
-
-    config.input.on('keypress', (ch, key) => this._onKey(key));
+    // Listen for `key` and `ch` events
+    config.input.on('keypress', (ch, key) => this._onKey(ch, key));
   }
 
   _initMouse() {
@@ -206,10 +206,21 @@ class Mapscii {
     this.notify(this._getFooter());
   }
 
-  _onKey(key) {
+  // Key listener (note: 'ch' is character, 'key' is defined keys)
+  _onKey(ch, key) {
     if (config.keyCallback && !config.keyCallback(key)) return;
+
+    // Check for special character inputs (i.e., ';' for right movement)
+    // NOTE: key.name is not defined for ';', so we check 'ch' instead
+    if (ch === ';') {
+      this.moveBy(0, 8/Math.pow(2, this.zoom));
+      this._draw();
+      return;
+    };
+
     if (!key || !key.name) return;
 
+    // #:# Keybindings
     // check if the pressed key is configured
     let draw = true;
     switch (key.name) {
@@ -227,12 +238,13 @@ class Mapscii {
       case 'z':
         this.zoomBy(-config.zoomStep);
         break;
+
+      // ## Vim Bindings
       case 'left':
-      case 'h':
+      case 'j':
         this.moveBy(0, -8/Math.pow(2, this.zoom));
         break;
       case 'right':
-      case 'l':
         this.moveBy(0, 8/Math.pow(2, this.zoom));
         break;
       case 'up':
@@ -240,7 +252,7 @@ class Mapscii {
         this.moveBy(6/Math.pow(2, this.zoom), 0);
         break;
       case 'down':
-      case 'j':
+      case 'l':
         this.moveBy(-6/Math.pow(2, this.zoom), 0);
         break;
       case 'c':
